@@ -1,494 +1,273 @@
---// Simple Roblox UI Library
---// Put this in a ModuleScript
-
 local Library = {}
-
-local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
-local LocalPlayer = Players.LocalPlayer
-local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-
+-- Hệ thống Themes
 local Themes = {
-	Dark = {
-		BG = Color3.fromRGB(20, 20, 20),
-		Top = Color3.fromRGB(28, 28, 28),
-		Stroke = Color3.fromRGB(60, 60, 60),
-		Text = Color3.fromRGB(235, 235, 235),
-		SubText = Color3.fromRGB(180, 180, 180),
-		Accent = Color3.fromRGB(90, 90, 90),
-		Button = Color3.fromRGB(35, 35, 35),
-		Tab = Color3.fromRGB(32, 32, 32),
-	}
-	,
-	Red = {
-		BG = Color3.fromRGB(28, 14, 14),
-		Top = Color3.fromRGB(40, 18, 18),
-		Stroke = Color3.fromRGB(120, 50, 50),
-		Text = Color3.fromRGB(255, 235, 235),
-		SubText = Color3.fromRGB(240, 190, 190),
-		Accent = Color3.fromRGB(200, 70, 70),
-		Button = Color3.fromRGB(55, 25, 25),
-		Tab = Color3.fromRGB(45, 20, 20),
-	},
-	Aqua = {
-		BG = Color3.fromRGB(12, 24, 26),
-		Top = Color3.fromRGB(16, 34, 38),
-		Stroke = Color3.fromRGB(60, 140, 150),
-		Text = Color3.fromRGB(235, 255, 255),
-		SubText = Color3.fromRGB(175, 235, 235),
-		Accent = Color3.fromRGB(70, 200, 210),
-		Button = Color3.fromRGB(20, 42, 46),
-		Tab = Color3.fromRGB(18, 36, 40),
-	},
-	Light = {
-		BG = Color3.fromRGB(240, 240, 240),
-		Top = Color3.fromRGB(250, 250, 250),
-		Stroke = Color3.fromRGB(200, 200, 200),
-		Text = Color3.fromRGB(20, 20, 20),
-		SubText = Color3.fromRGB(90, 90, 90),
-		Accent = Color3.fromRGB(120, 120, 120),
-		Button = Color3.fromRGB(230, 230, 230),
-		Tab = Color3.fromRGB(235, 235, 235),
-	},
+    Dark = { Main = Color3.fromRGB(20, 20, 20), Second = Color3.fromRGB(30, 30, 30), Text = Color3.fromRGB(255, 255, 255), Highlight = Color3.fromRGB(60, 60, 60) },
+    Red = { Main = Color3.fromRGB(25, 10, 10), Second = Color3.fromRGB(35, 15, 15), Text = Color3.fromRGB(255, 255, 255), Highlight = Color3.fromRGB(200, 50, 50) },
+    Aqua = { Main = Color3.fromRGB(15, 20, 25), Second = Color3.fromRGB(25, 30, 35), Text = Color3.fromRGB(255, 255, 255), Highlight = Color3.fromRGB(22, 171, 234) }, -- Màu Highlight chuẩn
+    Light = { Main = Color3.fromRGB(240, 240, 240), Second = Color3.fromRGB(255, 255, 255), Text = Color3.fromRGB(20, 20, 20), Highlight = Color3.fromRGB(200, 200, 200) }
 }
 
-local function make(className, props)
-	local obj = Instance.new(className)
-	for k, v in pairs(props or {}) do
-		obj[k] = v
-	end
-	return obj
-end
+function Library:MakeWindow(Config)
+    local WindowName = Config.Name or "Unnamed Library"
+    local LeftIcon = Config.Icon or ""
+    local CloseIcon = Config.CloseId or ""
+    local Theme = Themes[Config.Theme] or Themes.Aqua
 
-function Library:CreateWindow(config)
-	config = config or {}
+    -- Tạo ScreenGui (Chỉ tạo khi gọi hàm này)
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "CustomLibraryUI"
+    ScreenGui.Parent = (game:GetService("RunService"):IsStudio() and game.Players.LocalPlayer:WaitForChild("PlayerGui")) or CoreGui
+    ScreenGui.ResetOnSpawn = false
 
-	local ThemeName = config.Theme or "Dark"
-	local Theme = Themes[ThemeName] or Themes.Dark
+    -- Main Frame
+    local Main = Instance.new("Frame")
+    Main.Name = "Main"
+    Main.Size = UDim2.new(0, 650, 0, 400)
+    Main.Position = UDim2.new(0.5, -325, 0.5, -200)
+    Main.BackgroundColor3 = Theme.Main
+    Main.Parent = ScreenGui
+    
+    local MainCorner = Instance.new("UICorner")
+    MainCorner.CornerRadius = UDim.new(0, 8)
+    MainCorner.Parent = Main
 
-	local Gui = make("ScreenGui", {
-		Name = "LocalLibrary",
-		ResetOnSpawn = false,
-		IgnoreGuiInset = true,
-		Parent = PlayerGui
-	})
+    -- Topbar
+    local Topbar = Instance.new("Frame")
+    Topbar.Size = UDim2.new(1, 0, 0, 40)
+    Topbar.BackgroundTransparency = 1
+    Topbar.Parent = Main
 
-	local Main = make("Frame", {
-		Name = "Main",
-		Parent = Gui,
-		BackgroundColor3 = Theme.BG,
-		BorderSizePixel = 0,
-		Size = UDim2.new(0, 580, 0, 380),
-		Position = UDim2.new(0.5, -290, 0.5, -190),
-		ClipsDescendants = true
-	})
+    -- Left Icon (Góc trái)
+    if LeftIcon ~= "" then
+        local IconL = Instance.new("ImageLabel")
+        IconL.Size = UDim2.new(0, 25, 0, 25)
+        IconL.Position = UDim2.new(0, 10, 0, 7)
+        IconL.BackgroundTransparency = 1
+        IconL.Image = LeftIcon
+        IconL.Parent = Topbar
+    end
 
-	make("UICorner", { CornerRadius = UDim.new(0, 10), Parent = Main })
-	make("UIStroke", {
-		Parent = Main,
-		Color = Theme.Stroke,
-		Thickness = 1
-	})
+    -- Title
+    local Title = Instance.new("TextLabel")
+    Title.Size = UDim2.new(0, 200, 1, 0)
+    Title.Position = UDim2.new(0, (LeftIcon ~= "" and 45 or 15), 0, 0)
+    Title.BackgroundTransparency = 1
+    Title.Text = WindowName
+    Title.TextColor3 = Theme.Text
+    Title.Font = Enum.Font.GothamBold
+    Title.TextSize = 16
+    Title.TextXAlignment = Enum.TextXAlignment.Left
+    Title.Parent = Topbar
 
-	local TopBar = make("Frame", {
-		Name = "TopBar",
-		Parent = Main,
-		BackgroundColor3 = Theme.Top,
-		BorderSizePixel = 0,
-		Size = UDim2.new(1, 0, 0, 42)
-	})
+    -- Close Button (Góc phải)
+    local CloseBtn = Instance.new("ImageButton")
+    CloseBtn.Size = UDim2.new(0, 25, 0, 25)
+    CloseBtn.Position = UDim2.new(1, -35, 0, 7)
+    CloseBtn.BackgroundTransparency = 1
+    if CloseIcon ~= "" then
+        CloseBtn.Image = CloseIcon
+    else
+        -- Dùng text X nếu không có hình
+        CloseBtn.Image = ""
+        local XText = Instance.new("TextLabel")
+        XText.Size = UDim2.new(1,0,1,0)
+        XText.BackgroundTransparency = 1
+        XText.Text = "X"
+        XText.TextColor3 = Theme.Text
+        XText.Font = Enum.Font.GothamBold
+        XText.TextSize = 16
+        XText.Parent = CloseBtn
+    end
+    CloseBtn.Parent = Topbar
+    CloseBtn.MouseButton1Click:Connect(function()
+        ScreenGui:Destroy()
+    end)
 
-	make("UICorner", { CornerRadius = UDim.new(0, 10), Parent = TopBar })
+    -- Sidebar (Menu bên trái)
+    local Sidebar = Instance.new("ScrollingFrame")
+    Sidebar.Size = UDim2.new(0, 150, 1, -40)
+    Sidebar.Position = UDim2.new(0, 0, 0, 40)
+    Sidebar.BackgroundTransparency = 1
+    Sidebar.BorderSizePixel = 0
+    Sidebar.ScrollBarThickness = 0
+    Sidebar.Parent = Main
 
-	local TopMask = make("Frame", {
-		Parent = TopBar,
-		BackgroundColor3 = Theme.Top,
-		BorderSizePixel = 0,
-		Position = UDim2.new(0, 0, 0.5, 0),
-		Size = UDim2.new(1, 0, 0.5, 0)
-	})
+    local SidebarLayout = Instance.new("UIListLayout")
+    SidebarLayout.Padding = UDim.new(0, 5)
+    SidebarLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    SidebarLayout.Parent = Sidebar
 
-	local IconButton = make("ImageButton", {
-		Name = "LeftIcon",
-		Parent = TopBar,
-		BackgroundTransparency = 1,
-		Position = UDim2.new(0, 10, 0, 7),
-		Size = UDim2.new(0, 28, 0, 28),
-		Image = config.LeftIcon or "",
-		ScaleType = Enum.ScaleType.Fit
-	})
+    -- Container Content (Khu vực chứa UI bên phải)
+    local ContentContainer = Instance.new("Frame")
+    ContentContainer.Size = UDim2.new(1, -160, 1, -50)
+    ContentContainer.Position = UDim2.new(0, 150, 0, 40)
+    ContentContainer.BackgroundColor3 = Theme.Second
+    ContentContainer.Parent = Main
+    
+    local ContentCorner = Instance.new("UICorner")
+    ContentCorner.CornerRadius = UDim.new(0, 6)
+    ContentCorner.Parent = ContentContainer
 
-	local IconFallback = make("TextLabel", {
-		Parent = TopBar,
-		BackgroundTransparency = 1,
-		Position = UDim2.new(0, 10, 0, 7),
-		Size = UDim2.new(0, 28, 0, 28),
-		Text = config.LeftIconText or "",
-		TextColor3 = Theme.Text,
-		TextScaled = true,
-		Font = Enum.Font.GothamBold
-	})
+    -- Make UI Dragable (Kéo thả cơ bản)
+    local dragging, dragInput, dragStart, startPos
+    Topbar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = Main.Position
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end
+    end)
 
-	local Title = make("TextLabel", {
-		Name = "Title",
-		Parent = TopBar,
-		BackgroundTransparency = 1,
-		Position = UDim2.new(0, 46, 0, 0),
-		Size = UDim2.new(1, -100, 1, 0),
-		Font = Enum.Font.GothamBold,
-		Text = config.Title or "",
-		TextColor3 = Theme.Text,
-		TextSize = 15,
-		TextXAlignment = Enum.TextXAlignment.Left
-	})
+    -- Hàm xử lý bên trong Window
+    local Elements = {}
 
-	local CloseButton = make("TextButton", {
-		Name = "Close",
-		Parent = TopBar,
-		BackgroundTransparency = 1,
-		Position = UDim2.new(1, -38, 0, 6),
-		Size = UDim2.new(0, 30, 0, 30),
-		Text = config.CloseText or "❌",
-		TextColor3 = Theme.Text,
-		TextSize = 18,
-		Font = Enum.Font.GothamBold
-	})
+    function Elements:MakeDiscordBanner(D_Config)
+        local Banner = Instance.new("Frame")
+        Banner.Size = UDim2.new(1, -20, 0, 150)
+        Banner.Position = UDim2.new(0, 10, 0, 10)
+        Banner.BackgroundColor3 = Theme.Main
+        Banner.ClipsDescendants = true
+        Banner.Parent = ContentContainer
 
-	local CloseIcon = make("ImageButton", {
-		Name = "CloseImage",
-		Parent = TopBar,
-		BackgroundTransparency = 1,
-		Position = UDim2.new(1, -38, 0, 6),
-		Size = UDim2.new(0, 30, 0, 30),
-		Image = config.CloseIcon or "",
-		ScaleType = Enum.ScaleType.Fit,
-		Visible = false
-	})
+        local BCorner = Instance.new("UICorner")
+        BCorner.CornerRadius = UDim.new(0, 6)
+        BCorner.Parent = Banner
 
-	local TabBar = make("Frame", {
-		Name = "TabBar",
-		Parent = Main,
-		BackgroundColor3 = Theme.Tab,
-		BorderSizePixel = 0,
-		Position = UDim2.new(0, 0, 0, 42),
-		Size = UDim2.new(0, 150, 1, -42)
-	})
+        local Img = Instance.new("ImageLabel")
+        Img.Size = UDim2.new(1, 0, 0, 90)
+        Img.Image = D_Config.BannerId or ""
+        Img.ScaleType = Enum.ScaleType.Crop
+        Img.Parent = Banner
 
-	local TabList = make("UIListLayout", {
-		Parent = TabBar,
-		Padding = UDim.new(0, 6),
-		SortOrder = Enum.SortOrder.LayoutOrder
-	})
+        local InfoFrame = Instance.new("Frame")
+        InfoFrame.Size = UDim2.new(1, 0, 0, 60)
+        InfoFrame.Position = UDim2.new(0, 0, 0, 90)
+        InfoFrame.BackgroundTransparency = 1
+        InfoFrame.Parent = Banner
 
-	make("UIPadding", {
-		Parent = TabBar,
-		PaddingTop = UDim.new(0, 8),
-		PaddingLeft = UDim.new(0, 8),
-		PaddingRight = UDim.new(0, 8)
-	})
+        local Title = Instance.new("TextLabel")
+        Title.Size = UDim2.new(0.7, 0, 0.5, 0)
+        Title.Position = UDim2.new(0, 10, 0, 5)
+        Title.BackgroundTransparency = 1
+        Title.Text = D_Config.Title or "Discord Community"
+        Title.TextColor3 = Theme.Text
+        Title.Font = Enum.Font.GothamBold
+        Title.TextXAlignment = Enum.TextXAlignment.Left
+        Title.Parent = InfoFrame
 
-	local Pages = make("Frame", {
-		Name = "Pages",
-		Parent = Main,
-		BackgroundTransparency = 1,
-		Position = UDim2.new(0, 150, 0, 42),
-		Size = UDim2.new(1, -150, 1, -42)
-	})
+        local JoinBtn = Instance.new("TextButton")
+        JoinBtn.Size = UDim2.new(0, 100, 0, 30)
+        JoinBtn.Position = UDim2.new(1, -110, 0, 15)
+        JoinBtn.BackgroundColor3 = Color3.fromRGB(40, 200, 60) -- Màu xanh lá nút Join
+        JoinBtn.Text = "Join"
+        JoinBtn.TextColor3 = Color3.fromRGB(255,255,255)
+        JoinBtn.Font = Enum.Font.GothamBold
+        JoinBtn.Parent = InfoFrame
+        
+        local BtnCorner = Instance.new("UICorner")
+        BtnCorner.CornerRadius = UDim.new(0, 6)
+        BtnCorner.Parent = JoinBtn
 
-	local PageContainer = make("Folder", { Parent = Pages })
+        JoinBtn.MouseButton1Click:Connect(function()
+            setclipboard(D_Config.Link)
+            JoinBtn.Text = "Copied Link!"
+            task.wait(2)
+            JoinBtn.Text = "Join"
+        end)
+    end
 
-	local dragging = false
-	local dragInput, dragStart, startPos
+    function Elements:MakeToggle(T_Config)
+        -- Tạo khung Toggle
+        local ToggleFrame = Instance.new("Frame")
+        ToggleFrame.Size = UDim2.new(1, -20, 0, 60)
+        ToggleFrame.Position = UDim2.new(0, 10, 0, 170) -- Tạm thời set Position tĩnh, khi dùng thật nên xài UIListLayout
+        ToggleFrame.BackgroundColor3 = Theme.Main
+        ToggleFrame.Parent = ContentContainer
 
-	TopBar.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			dragging = true
-			dragStart = input.Position
-			startPos = Main.Position
-			input.Changed:Connect(function()
-				if input.UserInputState == Enum.UserInputState.End then
-					dragging = false
-				end
-			end)
-		end
-	end)
+        local TCorner = Instance.new("UICorner")
+        TCorner.CornerRadius = UDim.new(0, 6)
+        TCorner.Parent = ToggleFrame
 
-	TopBar.InputChanged:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-			dragInput = input
-		end
-	end)
+        -- Icon
+        local TIcon = Instance.new("ImageLabel")
+        TIcon.Size = UDim2.new(0, 40, 0, 40)
+        TIcon.Position = UDim2.new(0, 10, 0, 10)
+        TIcon.BackgroundColor3 = Theme.Highlight
+        TIcon.Image = T_Config.Icon or "rbxassetid://12345678" -- Thay icon mặc định vào đây
+        TIcon.Parent = ToggleFrame
+        Instance.new("UICorner", TIcon).CornerRadius = UDim.new(0, 8)
 
-	UserInputService.InputChanged:Connect(function(input)
-		if dragging and input == dragInput then
-			local delta = input.Position - dragStart
-			Main.Position = UDim2.new(
-				startPos.X.Scale,
-				startPos.X.Offset + delta.X,
-				startPos.Y.Scale,
-				startPos.Y.Offset + delta.Y
-			)
-		end
-	end)
+        local TTitle = Instance.new("TextLabel")
+        TTitle.Size = UDim2.new(0, 200, 0, 20)
+        TTitle.Position = UDim2.new(0, 60, 0, 10)
+        TTitle.BackgroundTransparency = 1
+        TTitle.Text = T_Config.Name or "Toggle"
+        TTitle.TextColor3 = Theme.Text
+        TTitle.Font = Enum.Font.GothamBold
+        TTitle.TextXAlignment = Enum.TextXAlignment.Left
+        TTitle.Parent = ToggleFrame
 
-	CloseButton.MouseButton1Click:Connect(function()
-		Gui:Destroy()
-	end)
+        -- Switch (Công tắc)
+        local SwitchBg = Instance.new("Frame")
+        SwitchBg.Size = UDim2.new(0, 40, 0, 20)
+        SwitchBg.Position = UDim2.new(1, -50, 0, 20)
+        SwitchBg.BackgroundColor3 = Theme.Second
+        SwitchBg.Parent = ToggleFrame
+        Instance.new("UICorner", SwitchBg).CornerRadius = UDim.new(1, 0)
 
-	CloseIcon.MouseButton1Click:Connect(function()
-		Gui:Destroy()
-	end)
+        local SwitchDot = Instance.new("Frame")
+        SwitchDot.Size = UDim2.new(0, 16, 0, 16)
+        SwitchDot.Position = UDim2.new(0, 2, 0, 2)
+        SwitchDot.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+        SwitchDot.Parent = SwitchBg
+        Instance.new("UICorner", SwitchDot).CornerRadius = UDim.new(1, 0)
 
-	local Window = {}
-	local Tabs = {}
+        local Toggled = false
+        ToggleFrame.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                Toggled = not Toggled
+                if Toggled then
+                    TweenService:Create(SwitchDot, TweenInfo.new(0.2), {Position = UDim2.new(1, -18, 0, 2), BackgroundColor3 = Color3.fromRGB(255,255,255)}):Play()
+                    TweenService:Create(SwitchBg, TweenInfo.new(0.2), {BackgroundColor3 = Theme.Highlight}):Play()
+                    ToggleFrame.UIStroke.Color = Theme.Highlight -- Đổi viền
+                else
+                    TweenService:Create(SwitchDot, TweenInfo.new(0.2), {Position = UDim2.new(0, 2, 0, 2), BackgroundColor3 = Color3.fromRGB(200,200,200)}):Play()
+                    TweenService:Create(SwitchBg, TweenInfo.new(0.2), {BackgroundColor3 = Theme.Second}):Play()
+                    ToggleFrame.UIStroke.Color = Theme.Main
+                end
+                pcall(T_Config.Callback, Toggled)
+            end
+        end)
+        
+        -- Thêm viền khi active giống hình
+        local Stroke = Instance.new("UIStroke")
+        Stroke.Color = Theme.Main
+        Stroke.Thickness = 1.5
+        Stroke.Parent = ToggleFrame
+    end
 
-	function Window:SetTitle(text)
-		Title.Text = text or ""
-	end
+    -- Hàm Slider cơ bản (để ông có thể mở rộng thêm)
+    function Elements:MakeSlider(S_Config)
+        -- Code cấu trúc Slider tương tự Toggle
+    end
 
-	function Window:SetIcons(leftId, closeId)
-		if leftId and leftId ~= "" then
-			IconButton.Image = leftId
-			IconButton.Visible = true
-			IconFallback.Visible = false
-		else
-			IconButton.Image = ""
-			IconButton.Visible = false
-			IconFallback.Visible = true
-		end
-
-		if closeId and closeId ~= "" then
-			CloseIcon.Image = closeId
-			CloseIcon.Visible = true
-			CloseButton.Visible = false
-		else
-			CloseIcon.Image = ""
-			CloseIcon.Visible = false
-			CloseButton.Visible = true
-		end
-	end
-
-	function Window:SetTheme(themeName)
-		local t = Themes[themeName]
-		if not t then return end
-		ThemeName = themeName
-		Theme = t
-
-		Main.BackgroundColor3 = t.BG
-		TopBar.BackgroundColor3 = t.Top
-		TopMask.BackgroundColor3 = t.Top
-		TabBar.BackgroundColor3 = t.Tab
-		Main.UIStroke.Color = t.Stroke
-		Title.TextColor3 = t.Text
-		CloseButton.TextColor3 = t.Text
-		IconFallback.TextColor3 = t.Text
-
-		for _, ui in ipairs(Gui:GetDescendants()) do
-			if ui:IsA("TextLabel") or ui:IsA("TextButton") then
-				if ui ~= Title and ui ~= CloseButton then
-					ui.TextColor3 = ui.TextColor3 == Color3.new(1,1,1) and t.Text or ui.TextColor3
-				end
-			end
-		end
-	end
-
-	local function createContentPage(tabName)
-		local Page = make("ScrollingFrame", {
-			Name = tabName .. "_Page",
-			Parent = PageContainer,
-			BackgroundTransparency = 1,
-			BorderSizePixel = 0,
-			Size = UDim2.new(1, 0, 1, 0),
-			Visible = false,
-			ScrollBarThickness = 4,
-			CanvasSize = UDim2.new(0, 0, 0, 0)
-		})
-
-		local Layout = make("UIListLayout", {
-			Parent = Page,
-			Padding = UDim.new(0, 8),
-			SortOrder = Enum.SortOrder.LayoutOrder
-		})
-
-		make("UIPadding", {
-			Parent = Page,
-			PaddingTop = UDim.new(0, 10),
-			PaddingLeft = UDim.new(0, 10),
-			PaddingRight = UDim.new(0, 10)
-		})
-
-		Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-			Page.CanvasSize = UDim2.new(0, 0, 0, Layout.AbsoluteContentSize.Y + 18)
-		end)
-
-		return Page
-	end
-
-	function Window:AddTab(tabName)
-		local TabButton = make("TextButton", {
-			Name = tabName .. "_Tab",
-			Parent = TabBar,
-			BackgroundColor3 = Theme.Button,
-			BorderSizePixel = 0,
-			Size = UDim2.new(1, 0, 0, 34),
-			Text = tabName,
-			TextColor3 = Theme.Text,
-			Font = Enum.Font.GothamSemibold,
-			TextSize = 14
-		})
-		make("UICorner", { CornerRadius = UDim.new(0, 8), Parent = TabButton })
-
-		local Page = createContentPage(tabName)
-		local ButtonState = false
-
-		local function setActive(active)
-			ButtonState = active
-			Page.Visible = active
-			TabButton.BackgroundColor3 = active and Theme.Accent or Theme.Button
-		end
-
-		setActive(false)
-		Tabs[tabName] = { Button = TabButton, Page = Page, SetActive = setActive }
-
-		TabButton.MouseButton1Click:Connect(function()
-			for _, tab in pairs(Tabs) do
-				tab.SetActive(false)
-			end
-			setActive(true)
-		end)
-
-		local Tab = {}
-
-		function Tab:AddLabel(text)
-			local Label = make("TextLabel", {
-				Parent = Page,
-				BackgroundColor3 = Theme.Button,
-				BorderSizePixel = 0,
-				Size = UDim2.new(1, 0, 0, 34),
-				Text = text or "Label",
-				TextColor3 = Theme.Text,
-				Font = Enum.Font.Gotham,
-				TextSize = 14,
-				TextXAlignment = Enum.TextXAlignment.Left
-			})
-			make("UICorner", { CornerRadius = UDim.new(0, 8), Parent = Label })
-			make("UIPadding", {
-				Parent = Label,
-				PaddingLeft = UDim.new(0, 10)
-			})
-			return Label
-		end
-
-		function Tab:AddButton(text, callback)
-			local Btn = make("TextButton", {
-				Parent = Page,
-				BackgroundColor3 = Theme.Button,
-				BorderSizePixel = 0,
-				Size = UDim2.new(1, 0, 0, 34),
-				Text = text or "Button",
-				TextColor3 = Theme.Text,
-				Font = Enum.Font.GothamSemibold,
-				TextSize = 14
-			})
-			make("UICorner", { CornerRadius = UDim.new(0, 8), Parent = Btn })
-
-			Btn.MouseButton1Click:Connect(function()
-				if callback then
-					task.spawn(callback)
-				end
-			end)
-
-			return Btn
-		end
-
-		function Tab:AddToggle(text, default, callback)
-			local State = default and true or false
-
-			local Holder = make("TextButton", {
-				Parent = Page,
-				BackgroundColor3 = Theme.Button,
-				BorderSizePixel = 0,
-				Size = UDim2.new(1, 0, 0, 34),
-				Text = "",
-				AutoButtonColor = false
-			})
-			make("UICorner", { CornerRadius = UDim.new(0, 8), Parent = Holder })
-
-			local Label = make("TextLabel", {
-				Parent = Holder,
-				BackgroundTransparency = 1,
-				Position = UDim2.new(0, 10, 0, 0),
-				Size = UDim2.new(1, -60, 1, 0),
-				Text = text or "Toggle",
-				TextColor3 = Theme.Text,
-				Font = Enum.Font.GothamSemibold,
-				TextSize = 14,
-				TextXAlignment = Enum.TextXAlignment.Left
-			})
-
-			local Box = make("Frame", {
-				Parent = Holder,
-				BackgroundColor3 = State and Theme.Accent or Theme.Stroke,
-				BorderSizePixel = 0,
-				Position = UDim2.new(1, -40, 0.5, -9),
-				Size = UDim2.new(0, 28, 0, 18)
-			})
-			make("UICorner", { CornerRadius = UDim.new(1, 0), Parent = Box })
-
-			local Dot = make("Frame", {
-				Parent = Box,
-				BackgroundColor3 = Color3.fromRGB(255,255,255),
-				BorderSizePixel = 0,
-				Position = State and UDim2.new(1, -16, 0.5, -6) or UDim2.new(0, 2, 0.5, -6),
-				Size = UDim2.new(0, 12, 0, 12)
-			})
-			make("UICorner", { CornerRadius = UDim.new(1, 0), Parent = Dot })
-
-			local function update()
-				Box.BackgroundColor3 = State and Theme.Accent or Theme.Stroke
-				local goal = {
-					Position = State and UDim2.new(1, -16, 0.5, -6) or UDim2.new(0, 2, 0.5, -6)
-				}
-				TweenService:Create(Dot, TweenInfo.new(0.15), goal):Play()
-				if callback then
-					task.spawn(callback, State)
-				end
-			end
-
-			Holder.MouseButton1Click:Connect(function()
-				State = not State
-				update()
-			end)
-
-			update()
-
-			return {
-				Set = function(v)
-					State = v and true or false
-					update()
-				end,
-				Get = function()
-					return State
-				end
-			}
-		end
-
-		return Tab
-	end
-
-	function Window:ShowFirstTab()
-		for _, tab in pairs(Tabs) do
-			tab.SetActive(false)
-		end
-		for _, tab in pairs(Tabs) do
-			tab.SetActive(true)
-			break
-		end
-	end
-
-	return Window
+    return Elements
 end
 
 return Library
