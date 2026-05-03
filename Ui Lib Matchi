@@ -1,0 +1,494 @@
+--// Simple Roblox UI Library
+--// Put this in a ModuleScript
+
+local Library = {}
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+local Themes = {
+	Dark = {
+		BG = Color3.fromRGB(20, 20, 20),
+		Top = Color3.fromRGB(28, 28, 28),
+		Stroke = Color3.fromRGB(60, 60, 60),
+		Text = Color3.fromRGB(235, 235, 235),
+		SubText = Color3.fromRGB(180, 180, 180),
+		Accent = Color3.fromRGB(90, 90, 90),
+		Button = Color3.fromRGB(35, 35, 35),
+		Tab = Color3.fromRGB(32, 32, 32),
+	}
+	,
+	Red = {
+		BG = Color3.fromRGB(28, 14, 14),
+		Top = Color3.fromRGB(40, 18, 18),
+		Stroke = Color3.fromRGB(120, 50, 50),
+		Text = Color3.fromRGB(255, 235, 235),
+		SubText = Color3.fromRGB(240, 190, 190),
+		Accent = Color3.fromRGB(200, 70, 70),
+		Button = Color3.fromRGB(55, 25, 25),
+		Tab = Color3.fromRGB(45, 20, 20),
+	},
+	Aqua = {
+		BG = Color3.fromRGB(12, 24, 26),
+		Top = Color3.fromRGB(16, 34, 38),
+		Stroke = Color3.fromRGB(60, 140, 150),
+		Text = Color3.fromRGB(235, 255, 255),
+		SubText = Color3.fromRGB(175, 235, 235),
+		Accent = Color3.fromRGB(70, 200, 210),
+		Button = Color3.fromRGB(20, 42, 46),
+		Tab = Color3.fromRGB(18, 36, 40),
+	},
+	Light = {
+		BG = Color3.fromRGB(240, 240, 240),
+		Top = Color3.fromRGB(250, 250, 250),
+		Stroke = Color3.fromRGB(200, 200, 200),
+		Text = Color3.fromRGB(20, 20, 20),
+		SubText = Color3.fromRGB(90, 90, 90),
+		Accent = Color3.fromRGB(120, 120, 120),
+		Button = Color3.fromRGB(230, 230, 230),
+		Tab = Color3.fromRGB(235, 235, 235),
+	},
+}
+
+local function make(className, props)
+	local obj = Instance.new(className)
+	for k, v in pairs(props or {}) do
+		obj[k] = v
+	end
+	return obj
+end
+
+function Library:CreateWindow(config)
+	config = config or {}
+
+	local ThemeName = config.Theme or "Dark"
+	local Theme = Themes[ThemeName] or Themes.Dark
+
+	local Gui = make("ScreenGui", {
+		Name = "LocalLibrary",
+		ResetOnSpawn = false,
+		IgnoreGuiInset = true,
+		Parent = PlayerGui
+	})
+
+	local Main = make("Frame", {
+		Name = "Main",
+		Parent = Gui,
+		BackgroundColor3 = Theme.BG,
+		BorderSizePixel = 0,
+		Size = UDim2.new(0, 580, 0, 380),
+		Position = UDim2.new(0.5, -290, 0.5, -190),
+		ClipsDescendants = true
+	})
+
+	make("UICorner", { CornerRadius = UDim.new(0, 10), Parent = Main })
+	make("UIStroke", {
+		Parent = Main,
+		Color = Theme.Stroke,
+		Thickness = 1
+	})
+
+	local TopBar = make("Frame", {
+		Name = "TopBar",
+		Parent = Main,
+		BackgroundColor3 = Theme.Top,
+		BorderSizePixel = 0,
+		Size = UDim2.new(1, 0, 0, 42)
+	})
+
+	make("UICorner", { CornerRadius = UDim.new(0, 10), Parent = TopBar })
+
+	local TopMask = make("Frame", {
+		Parent = TopBar,
+		BackgroundColor3 = Theme.Top,
+		BorderSizePixel = 0,
+		Position = UDim2.new(0, 0, 0.5, 0),
+		Size = UDim2.new(1, 0, 0.5, 0)
+	})
+
+	local IconButton = make("ImageButton", {
+		Name = "LeftIcon",
+		Parent = TopBar,
+		BackgroundTransparency = 1,
+		Position = UDim2.new(0, 10, 0, 7),
+		Size = UDim2.new(0, 28, 0, 28),
+		Image = config.LeftIcon or "",
+		ScaleType = Enum.ScaleType.Fit
+	})
+
+	local IconFallback = make("TextLabel", {
+		Parent = TopBar,
+		BackgroundTransparency = 1,
+		Position = UDim2.new(0, 10, 0, 7),
+		Size = UDim2.new(0, 28, 0, 28),
+		Text = config.LeftIconText or "",
+		TextColor3 = Theme.Text,
+		TextScaled = true,
+		Font = Enum.Font.GothamBold
+	})
+
+	local Title = make("TextLabel", {
+		Name = "Title",
+		Parent = TopBar,
+		BackgroundTransparency = 1,
+		Position = UDim2.new(0, 46, 0, 0),
+		Size = UDim2.new(1, -100, 1, 0),
+		Font = Enum.Font.GothamBold,
+		Text = config.Title or "",
+		TextColor3 = Theme.Text,
+		TextSize = 15,
+		TextXAlignment = Enum.TextXAlignment.Left
+	})
+
+	local CloseButton = make("TextButton", {
+		Name = "Close",
+		Parent = TopBar,
+		BackgroundTransparency = 1,
+		Position = UDim2.new(1, -38, 0, 6),
+		Size = UDim2.new(0, 30, 0, 30),
+		Text = config.CloseText or "❌",
+		TextColor3 = Theme.Text,
+		TextSize = 18,
+		Font = Enum.Font.GothamBold
+	})
+
+	local CloseIcon = make("ImageButton", {
+		Name = "CloseImage",
+		Parent = TopBar,
+		BackgroundTransparency = 1,
+		Position = UDim2.new(1, -38, 0, 6),
+		Size = UDim2.new(0, 30, 0, 30),
+		Image = config.CloseIcon or "",
+		ScaleType = Enum.ScaleType.Fit,
+		Visible = false
+	})
+
+	local TabBar = make("Frame", {
+		Name = "TabBar",
+		Parent = Main,
+		BackgroundColor3 = Theme.Tab,
+		BorderSizePixel = 0,
+		Position = UDim2.new(0, 0, 0, 42),
+		Size = UDim2.new(0, 150, 1, -42)
+	})
+
+	local TabList = make("UIListLayout", {
+		Parent = TabBar,
+		Padding = UDim.new(0, 6),
+		SortOrder = Enum.SortOrder.LayoutOrder
+	})
+
+	make("UIPadding", {
+		Parent = TabBar,
+		PaddingTop = UDim.new(0, 8),
+		PaddingLeft = UDim.new(0, 8),
+		PaddingRight = UDim.new(0, 8)
+	})
+
+	local Pages = make("Frame", {
+		Name = "Pages",
+		Parent = Main,
+		BackgroundTransparency = 1,
+		Position = UDim2.new(0, 150, 0, 42),
+		Size = UDim2.new(1, -150, 1, -42)
+	})
+
+	local PageContainer = make("Folder", { Parent = Pages })
+
+	local dragging = false
+	local dragInput, dragStart, startPos
+
+	TopBar.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = true
+			dragStart = input.Position
+			startPos = Main.Position
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+				end
+			end)
+		end
+	end)
+
+	TopBar.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+			dragInput = input
+		end
+	end)
+
+	UserInputService.InputChanged:Connect(function(input)
+		if dragging and input == dragInput then
+			local delta = input.Position - dragStart
+			Main.Position = UDim2.new(
+				startPos.X.Scale,
+				startPos.X.Offset + delta.X,
+				startPos.Y.Scale,
+				startPos.Y.Offset + delta.Y
+			)
+		end
+	end)
+
+	CloseButton.MouseButton1Click:Connect(function()
+		Gui:Destroy()
+	end)
+
+	CloseIcon.MouseButton1Click:Connect(function()
+		Gui:Destroy()
+	end)
+
+	local Window = {}
+	local Tabs = {}
+
+	function Window:SetTitle(text)
+		Title.Text = text or ""
+	end
+
+	function Window:SetIcons(leftId, closeId)
+		if leftId and leftId ~= "" then
+			IconButton.Image = leftId
+			IconButton.Visible = true
+			IconFallback.Visible = false
+		else
+			IconButton.Image = ""
+			IconButton.Visible = false
+			IconFallback.Visible = true
+		end
+
+		if closeId and closeId ~= "" then
+			CloseIcon.Image = closeId
+			CloseIcon.Visible = true
+			CloseButton.Visible = false
+		else
+			CloseIcon.Image = ""
+			CloseIcon.Visible = false
+			CloseButton.Visible = true
+		end
+	end
+
+	function Window:SetTheme(themeName)
+		local t = Themes[themeName]
+		if not t then return end
+		ThemeName = themeName
+		Theme = t
+
+		Main.BackgroundColor3 = t.BG
+		TopBar.BackgroundColor3 = t.Top
+		TopMask.BackgroundColor3 = t.Top
+		TabBar.BackgroundColor3 = t.Tab
+		Main.UIStroke.Color = t.Stroke
+		Title.TextColor3 = t.Text
+		CloseButton.TextColor3 = t.Text
+		IconFallback.TextColor3 = t.Text
+
+		for _, ui in ipairs(Gui:GetDescendants()) do
+			if ui:IsA("TextLabel") or ui:IsA("TextButton") then
+				if ui ~= Title and ui ~= CloseButton then
+					ui.TextColor3 = ui.TextColor3 == Color3.new(1,1,1) and t.Text or ui.TextColor3
+				end
+			end
+		end
+	end
+
+	local function createContentPage(tabName)
+		local Page = make("ScrollingFrame", {
+			Name = tabName .. "_Page",
+			Parent = PageContainer,
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			Size = UDim2.new(1, 0, 1, 0),
+			Visible = false,
+			ScrollBarThickness = 4,
+			CanvasSize = UDim2.new(0, 0, 0, 0)
+		})
+
+		local Layout = make("UIListLayout", {
+			Parent = Page,
+			Padding = UDim.new(0, 8),
+			SortOrder = Enum.SortOrder.LayoutOrder
+		})
+
+		make("UIPadding", {
+			Parent = Page,
+			PaddingTop = UDim.new(0, 10),
+			PaddingLeft = UDim.new(0, 10),
+			PaddingRight = UDim.new(0, 10)
+		})
+
+		Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+			Page.CanvasSize = UDim2.new(0, 0, 0, Layout.AbsoluteContentSize.Y + 18)
+		end)
+
+		return Page
+	end
+
+	function Window:AddTab(tabName)
+		local TabButton = make("TextButton", {
+			Name = tabName .. "_Tab",
+			Parent = TabBar,
+			BackgroundColor3 = Theme.Button,
+			BorderSizePixel = 0,
+			Size = UDim2.new(1, 0, 0, 34),
+			Text = tabName,
+			TextColor3 = Theme.Text,
+			Font = Enum.Font.GothamSemibold,
+			TextSize = 14
+		})
+		make("UICorner", { CornerRadius = UDim.new(0, 8), Parent = TabButton })
+
+		local Page = createContentPage(tabName)
+		local ButtonState = false
+
+		local function setActive(active)
+			ButtonState = active
+			Page.Visible = active
+			TabButton.BackgroundColor3 = active and Theme.Accent or Theme.Button
+		end
+
+		setActive(false)
+		Tabs[tabName] = { Button = TabButton, Page = Page, SetActive = setActive }
+
+		TabButton.MouseButton1Click:Connect(function()
+			for _, tab in pairs(Tabs) do
+				tab.SetActive(false)
+			end
+			setActive(true)
+		end)
+
+		local Tab = {}
+
+		function Tab:AddLabel(text)
+			local Label = make("TextLabel", {
+				Parent = Page,
+				BackgroundColor3 = Theme.Button,
+				BorderSizePixel = 0,
+				Size = UDim2.new(1, 0, 0, 34),
+				Text = text or "Label",
+				TextColor3 = Theme.Text,
+				Font = Enum.Font.Gotham,
+				TextSize = 14,
+				TextXAlignment = Enum.TextXAlignment.Left
+			})
+			make("UICorner", { CornerRadius = UDim.new(0, 8), Parent = Label })
+			make("UIPadding", {
+				Parent = Label,
+				PaddingLeft = UDim.new(0, 10)
+			})
+			return Label
+		end
+
+		function Tab:AddButton(text, callback)
+			local Btn = make("TextButton", {
+				Parent = Page,
+				BackgroundColor3 = Theme.Button,
+				BorderSizePixel = 0,
+				Size = UDim2.new(1, 0, 0, 34),
+				Text = text or "Button",
+				TextColor3 = Theme.Text,
+				Font = Enum.Font.GothamSemibold,
+				TextSize = 14
+			})
+			make("UICorner", { CornerRadius = UDim.new(0, 8), Parent = Btn })
+
+			Btn.MouseButton1Click:Connect(function()
+				if callback then
+					task.spawn(callback)
+				end
+			end)
+
+			return Btn
+		end
+
+		function Tab:AddToggle(text, default, callback)
+			local State = default and true or false
+
+			local Holder = make("TextButton", {
+				Parent = Page,
+				BackgroundColor3 = Theme.Button,
+				BorderSizePixel = 0,
+				Size = UDim2.new(1, 0, 0, 34),
+				Text = "",
+				AutoButtonColor = false
+			})
+			make("UICorner", { CornerRadius = UDim.new(0, 8), Parent = Holder })
+
+			local Label = make("TextLabel", {
+				Parent = Holder,
+				BackgroundTransparency = 1,
+				Position = UDim2.new(0, 10, 0, 0),
+				Size = UDim2.new(1, -60, 1, 0),
+				Text = text or "Toggle",
+				TextColor3 = Theme.Text,
+				Font = Enum.Font.GothamSemibold,
+				TextSize = 14,
+				TextXAlignment = Enum.TextXAlignment.Left
+			})
+
+			local Box = make("Frame", {
+				Parent = Holder,
+				BackgroundColor3 = State and Theme.Accent or Theme.Stroke,
+				BorderSizePixel = 0,
+				Position = UDim2.new(1, -40, 0.5, -9),
+				Size = UDim2.new(0, 28, 0, 18)
+			})
+			make("UICorner", { CornerRadius = UDim.new(1, 0), Parent = Box })
+
+			local Dot = make("Frame", {
+				Parent = Box,
+				BackgroundColor3 = Color3.fromRGB(255,255,255),
+				BorderSizePixel = 0,
+				Position = State and UDim2.new(1, -16, 0.5, -6) or UDim2.new(0, 2, 0.5, -6),
+				Size = UDim2.new(0, 12, 0, 12)
+			})
+			make("UICorner", { CornerRadius = UDim.new(1, 0), Parent = Dot })
+
+			local function update()
+				Box.BackgroundColor3 = State and Theme.Accent or Theme.Stroke
+				local goal = {
+					Position = State and UDim2.new(1, -16, 0.5, -6) or UDim2.new(0, 2, 0.5, -6)
+				}
+				TweenService:Create(Dot, TweenInfo.new(0.15), goal):Play()
+				if callback then
+					task.spawn(callback, State)
+				end
+			end
+
+			Holder.MouseButton1Click:Connect(function()
+				State = not State
+				update()
+			end)
+
+			update()
+
+			return {
+				Set = function(v)
+					State = v and true or false
+					update()
+				end,
+				Get = function()
+					return State
+				end
+			}
+		end
+
+		return Tab
+	end
+
+	function Window:ShowFirstTab()
+		for _, tab in pairs(Tabs) do
+			tab.SetActive(false)
+		end
+		for _, tab in pairs(Tabs) do
+			tab.SetActive(true)
+			break
+		end
+	end
+
+	return Window
+end
+
+return Library
